@@ -10,7 +10,6 @@ import copy
 
 class Arvore:
     jogada = []
-    copia_tabuleiro = []
     filhos = []
     profundidade = 0
    
@@ -19,15 +18,14 @@ class Arvore:
     min_pontos = -100
 
     def __init__(self, tabuleiro, cor_peca_jogador, cor_peca_atual, profundidade):
-        self.copia_tabuleiro = tabuleiro
         self.filhos = []
-        possiveis_jogadas = self.copia_tabuleiro.legal_moves(cor_peca_atual)
-        if(profundidade == 0 or len(possiveis_jogadas) == 0 or self.copia_tabuleiro.is_terminal_state()):
-            self.pontos = self.custo(cor_peca_jogador)
+        possiveis_jogadas = tabuleiro.legal_moves(cor_peca_atual)
+        if(profundidade == 0 or len(possiveis_jogadas) == 0 or tabuleiro.is_terminal_state()):
+            self.pontos = self.custo(cor_peca_jogador, tabuleiro)
             self.profundidade = 0
         else:
             for possivel_jogada in possiveis_jogadas:
-                novo_tabuleiro = copy.deepcopy(self.copia_tabuleiro)
+                novo_tabuleiro = copy.deepcopy(tabuleiro)
                 novo_tabuleiro.process_move(possivel_jogada, cor_peca_atual)
                 proximas_jogadas = Arvore(novo_tabuleiro, cor_peca_jogador, novo_tabuleiro.opponent(cor_peca_atual), profundidade-1)
                 proximas_jogadas.jogada = possivel_jogada
@@ -67,11 +65,11 @@ class Arvore:
     def normaliza_pontuacao(self, min_antigo, max_antigo, valor):
         return ((valor-min_antigo)/(max_antigo-min_antigo) * (self.max_pontos-self.min_pontos) + self.min_pontos)
 
-    def custo(self, cor_peca):
-        if(self.copia_tabuleiro.piece_count[self.copia_tabuleiro.opponent(cor_peca)] == 0):
+    def custo(self, cor_peca, tabuleiro):
+        if(tabuleiro.piece_count[tabuleiro.opponent(cor_peca)] == 0):
             return self.max_pontos
         else:
-            return self.normaliza_pontuacao(0, 64, self.copia_tabuleiro.piece_count[cor_peca])
+            return self.normaliza_pontuacao(0, 64, tabuleiro.piece_count[cor_peca])
 
 def make_move(the_board, color):
     """
