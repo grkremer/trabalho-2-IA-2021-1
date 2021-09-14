@@ -2,13 +2,12 @@ import random
 import sys
 import copy
 
-# Agente que utiliza minimax com heuristica de número de peças
+# Agente que utiliza minimax com heuristica de número de peças, mobilidade e danger zone
 
 
 class Arvore:
     jogada = []
     filhos = []
-    profundidade = 0
 
     pontos = 0
     max_pontos = 100
@@ -18,8 +17,8 @@ class Arvore:
         self.filhos = []
         possiveis_jogadas = tabuleiro.legal_moves(cor_peca_atual)
         if(profundidade == 0 or len(possiveis_jogadas) == 0 or tabuleiro.is_terminal_state()):
-            self.pontos = self.custo(cor_peca_jogador, tabuleiro)
-            self.profundidade = 0
+            self.pontos = self.custo(
+                cor_peca_jogador, tabuleiro, len(possiveis_jogadas))
         else:
             for possivel_jogada in possiveis_jogadas:
                 novo_tabuleiro = copy.deepcopy(tabuleiro)
@@ -29,14 +28,8 @@ class Arvore:
                 proximas_jogadas.jogada = possivel_jogada
                 self.filhos.append(proximas_jogadas)
 
-            maior_profundidade_filho = 0
-            for filho in self.filhos:
-                maior_profundidade_filho = max(
-                    maior_profundidade_filho, filho.pontos)
-            self.profundidade = maior_profundidade_filho+1
-
     def minimax(self, maximiza, alpha, beta):
-        if(self.profundidade != 0):
+        if(self.filhos != []):
             if(maximiza):
                 pontuacao_maxima = self.min_pontos
                 for i in range(0, len(self.filhos)):
@@ -65,11 +58,37 @@ class Arvore:
     def normaliza_pontuacao(self, min_antigo, max_antigo, valor):
         return ((valor-min_antigo)/(max_antigo-min_antigo) * (self.max_pontos-self.min_pontos) + self.min_pontos)
 
-    def custo(self, cor_peca, tabuleiro):
+    def custo(self, cor_peca, tabuleiro, possiveis_jogadas_tamanho):
         if(tabuleiro.piece_count[tabuleiro.opponent(cor_peca)] == 0):
             return self.max_pontos
         else:
-            return self.normaliza_pontuacao(0, 64, tabuleiro.piece_count[cor_peca])
+            num_pecas = self.normaliza_pontuacao(
+                0, 64, tabuleiro.piece_count[cor_peca])
+            zone = self.normaliza_pontuacao(
+                0, 256, danger_zone(tabuleiro.tiles, cor_peca))
+            return num_pecas * 0.6 + zone * 0.4
+
+
+def danger_zone(board, color):
+    points = 0
+    for x in range(8):
+        for y in range(8):
+            if (board[x][y] == color):
+                if is_danger_zone(x, y):
+                    points += 1
+                elif is_bad_zone(x, y):
+                    points += 2
+            else:
+                points += 4
+    return points
+
+
+def is_danger_zone(x, y):
+    return (((y in [0, 7]) and (x in [1, 6])) or ((y in [1, 6]) and (x in [0, 1, 6, 7])))
+
+
+def is_bad_zone(x, y):
+    return (((y in [1, 6]) and (x >= 2 and x <= 5)) or ((x in [1, 6]) and (y >= 2 and y <= 5)))
 
 
 def make_move(the_board, color):

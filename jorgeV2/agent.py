@@ -2,40 +2,39 @@ import random
 import sys
 import copy
 
-# Voce pode criar funcoes auxiliares neste arquivo
-# e tambem modulos auxiliares neste pacote.
-#
-# Nao esqueca de renomear 'your_agent' com o nome
-# do seu agente.
+# Agente que utiliza minimax com heuristica de número de peças e mobilidade
+
 
 class Arvore:
     jogada = []
     filhos = []
-   
+
     pontos = 0
     max_pontos = 100
     min_pontos = -100
 
-    def __init__(self, tabuleiro, cor_peca_jogador, cor_peca_atual,profundidade):
+    def __init__(self, tabuleiro, cor_peca_jogador, cor_peca_atual, profundidade):
         self.filhos = []
         possiveis_jogadas = tabuleiro.legal_moves(cor_peca_atual)
         if(profundidade == 0 or len(possiveis_jogadas) == 0 or tabuleiro.is_terminal_state()):
-            self.pontos = self.custo(cor_peca_jogador, tabuleiro,len(possiveis_jogadas))
+            self.pontos = self.custo(
+                cor_peca_jogador, tabuleiro, len(possiveis_jogadas))
         else:
             for possivel_jogada in possiveis_jogadas:
                 novo_tabuleiro = copy.deepcopy(tabuleiro)
                 novo_tabuleiro.process_move(possivel_jogada, cor_peca_atual)
-                proximas_jogadas = Arvore(novo_tabuleiro, cor_peca_jogador, novo_tabuleiro.opponent(cor_peca_atual),profundidade-1)
+                proximas_jogadas = Arvore(novo_tabuleiro, cor_peca_jogador, novo_tabuleiro.opponent(
+                    cor_peca_atual), profundidade-1)
                 proximas_jogadas.jogada = possivel_jogada
                 self.filhos.append(proximas_jogadas)
-
 
     def minimax(self, maximiza, alpha, beta):
         if(self.filhos != []):
             if(maximiza):
                 pontuacao_maxima = self.min_pontos
-                for i in range(0,len(self.filhos)):
-                    pontuacao_filho = self.filhos[i].minimax(False, alpha, beta)
+                for i in range(0, len(self.filhos)):
+                    pontuacao_filho = self.filhos[i].minimax(
+                        False, alpha, beta)
                     pontuacao_maxima = max(pontuacao_maxima, pontuacao_filho)
                     alpha = max(alpha, pontuacao_filho)
                     if(beta <= alpha):
@@ -45,7 +44,7 @@ class Arvore:
                 return pontuacao_maxima
             else:
                 pontuacao_minima = self.max_pontos
-                for i in range(0,len(self.filhos)):
+                for i in range(0, len(self.filhos)):
                     pontuacao_filho = self.filhos[i].minimax(True, alpha, beta)
                     pontuacao_minima = min(pontuacao_minima, pontuacao_filho)
                     beta = min(beta, pontuacao_filho)
@@ -59,11 +58,12 @@ class Arvore:
     def normaliza_pontuacao(self, min_antigo, max_antigo, valor):
         return ((valor-min_antigo)/(max_antigo-min_antigo) * (self.max_pontos-self.min_pontos) + self.min_pontos)
 
-    def custo(self, cor_peca, tabuleiro,possiveis_jogadas_tamanho):
+    def custo(self, cor_peca, tabuleiro, possiveis_jogadas_tamanho):
         if(tabuleiro.piece_count[tabuleiro.opponent(cor_peca)] == 0):
             return self.max_pontos
         else:
-            return self.normaliza_pontuacao(0, 64, tabuleiro.piece_count[cor_peca])*0.9 + self.normaliza_pontuacao(0, 32, possiveis_jogadas_tamanho)*0.1
+            return self.normaliza_pontuacao(0, 64, tabuleiro.piece_count[cor_peca])*0.6 + self.normaliza_pontuacao(0, 32, possiveis_jogadas_tamanho)*0.4
+
 
 def make_move(the_board, color):
     """
@@ -72,10 +72,6 @@ def make_move(the_board, color):
     :param color: a character indicating the color to make the move ('B' or 'W')
     :return: (int, int) tuple with x, y indexes of the move (remember: 0 is the first row/column)
     """
-    # o codigo abaixo apenas retorna um movimento aleatorio valido para
-    # a primeira jogada com as pretas.
-    # Remova-o e coloque a sua implementacao da poda alpha-beta
-
     profundidade = 3
     jogadas = Arvore(the_board, color, color, profundidade)
     random.shuffle(jogadas.filhos)
@@ -91,4 +87,3 @@ def make_move(the_board, color):
 
     print("pontuacao = "+str(pontuacao_maxima))
     return melhor_jogada
-
