@@ -66,7 +66,9 @@ class Arvore:
                 0, 64, tabuleiro.piece_count[cor_peca])
             zone = self.normaliza_pontuacao(
                 80, 256, danger_zone(tabuleiro.tiles, cor_peca))
-            return num_pecas * 0.6 + zone * 0.4
+            mobilidade = self.normaliza_pontuacao(
+                0, 32, possiveis_jogadas_tamanho)
+            return num_pecas * 0.8 + zone * 0.1 + mobilidade * 0.1
 
 
 def danger_zone(board, color):
