@@ -2,7 +2,7 @@ import random
 import sys
 import copy
 
-# Agente que utiliza minimax com heuristica de número de peças
+# Agente que utiliza minimax com heuristica de número de peças, mobilidade e danger zone
 
 
 class Arvore:
@@ -17,8 +17,8 @@ class Arvore:
         self.filhos = []
         possiveis_jogadas = tabuleiro.legal_moves(cor_peca_atual)
         if(profundidade == 0 or len(possiveis_jogadas) == 0 or tabuleiro.is_terminal_state()):
-            self.pontos = self.custo(cor_peca_jogador, tabuleiro)
-            self.profundidade = 0
+            self.pontos = self.custo(
+                cor_peca_jogador, tabuleiro, len(possiveis_jogadas))
         else:
             for possivel_jogada in possiveis_jogadas:
                 novo_tabuleiro = copy.deepcopy(tabuleiro)
@@ -58,20 +58,47 @@ class Arvore:
     def normaliza_pontuacao(self, min_antigo, max_antigo, valor):
         return ((valor-min_antigo)/(max_antigo-min_antigo) * (self.max_pontos-self.min_pontos) + self.min_pontos)
 
-    def custo(self, cor_peca, tabuleiro):
+    def custo_peca(self, cor_peca, tabuleiro, possiveis_jogadas_tamanho):
+        num_pecas = self.normaliza_pontuacao(
+                0, 64, tabuleiro.piece_count[cor_peca])
+        zone = self.normaliza_pontuacao(
+                80, 256, danger_zone(tabuleiro.tiles, cor_peca))
+        mobilidade = self.normaliza_pontuacao(
+                0, 32, possiveis_jogadas_tamanho)
+        return num_pecas * 0.8 + zone * 0.2 + mobilidade * 0.0
+
+    def custo(self, cor_peca, tabuleiro, possiveis_jogadas_tamanho):
         if(tabuleiro.piece_count[tabuleiro.opponent(cor_peca)] == 0):
             return self.max_pontos
         else:
-            return self.normaliza_pontuacao(0, 64, tabuleiro.piece_count[cor_peca])
+            cor_peca_oponente = tabuleiro.opponent(cor_peca)
+            possiveis_jogadas_tamanho_oponente = len(tabuleiro.legal_moves(cor_peca_oponente))
+            return self.custo_peca(cor_peca, tabuleiro, possiveis_jogadas_tamanho) * 0.7 + self.custo_peca(cor_peca_oponente, tabuleiro, possiveis_jogadas_tamanho_oponente) * -0.3
 
-def calcula_profundidade(tabuleiro):
-    vazios = tabuleiro.piece_count[tabuleiro.EMPTY]
-    if(vazios < 10):
-        return 5
-    if(vazios < 18):
-        return 4
-    else:
-        return 3
+
+def danger_zone(board, color):
+    points = 0
+    for x in range(8):
+        for y in range(8):
+            if (board[x][y] == color):
+                if is_danger_zone(x, y):
+                    points += 1
+                elif is_bad_zone(x, y):
+                    points += 2
+                else:
+                    points += 4
+            else:
+                points += 4
+    return points
+
+
+def is_danger_zone(x, y):
+    return (((y in [0, 7]) and (x in [1, 6])) or ((y in [1, 6]) and (x in [0, 1, 6, 7])))
+
+
+def is_bad_zone(x, y):
+    return (((y in [1, 6]) and (x >= 2 and x <= 5)) or ((x in [1, 6]) and (y >= 2 and y <= 5)))
+
 
 def make_move(the_board, color):
     """
@@ -80,7 +107,7 @@ def make_move(the_board, color):
     :param color: a character indicating the color to make the move ('B' or 'W')
     :return: (int, int) tuple with x, y indexes of the move (remember: 0 is the first row/column)
     """
-    profundidade = calcula_profundidade(the_board)
+    profundidade = 3
     jogadas = Arvore(the_board, color, color, profundidade)
     random.shuffle(jogadas.filhos)
     jogadas.minimax(True, jogadas.min_pontos, jogadas.max_pontos)
