@@ -1,9 +1,7 @@
 import random
 import sys
 import copy
-from multiprocessing import Pool
-import multiprocessing
-from itertools import repeat
+from threading import Thread
 
 # Agente que utiliza minimax com heuristica de número de peças e mobilidade
 
@@ -20,27 +18,36 @@ class Arvore:
         novo_tabuleiro = copy.deepcopy(tabuleiro)
         novo_tabuleiro.process_move(possivel_jogada, cor_peca_atual)
         proximas_jogadas = Arvore(novo_tabuleiro, cor_peca_jogador, novo_tabuleiro.opponent(
-        cor_peca_atual), profundidade-1,0)
+        cor_peca_atual), profundidade-1, False)
         proximas_jogadas.jogada = possivel_jogada
         return proximas_jogadas
 
-    def __init__(self, tabuleiro, cor_peca_jogador, cor_peca_atual, profundidade, first):
+    def __init__(self, tabuleiro, cor_peca_jogador, cor_peca_atual, profundidade, usa_multiprocess, irmaos, jogada_atual = []):
         self.filhos = []
+        self.jogada = jogada_atual
         possiveis_jogadas = tabuleiro.legal_moves(cor_peca_atual)
         if(profundidade == 0 or len(possiveis_jogadas) == 0 or tabuleiro.is_terminal_state()):
             self.pontos = self.custo(
                 cor_peca_jogador, tabuleiro, len(possiveis_jogadas))
-        elif(first == 1):
-            with multiprocessing.Pool(processes=len(possiveis_jogadas)) as pool:
-                pool.starmap(self.inicializa,zip(possiveis_jogadas, repeat(tabuleiro), repeat(cor_peca_jogador), repeat(cor_peca_atual), repeat(profundidade)))
+        elif usa_multiprocess:
+            threads = [None] * len(possiveis_jogadas)
+            for i in range(len(threads)):
+                novo_tabuleiro = copy.deepcopy(tabuleiro)
+                novo_tabuleiro.process_move(possiveis_jogadas[i], cor_peca_atual)
+                threads[i] = Thread(target=Arvore, args=(novo_tabuleiro, cor_peca_jogador, novo_tabuleiro.opponent(
+                    cor_peca_atual), profundidade-1, False, self.filhos, possiveis_jogadas[i]))
+                threads[i].start()
+            for i in range(len(threads)):   
+                threads[i].join()
         else:
             for possivel_jogada in possiveis_jogadas:
                 novo_tabuleiro = copy.deepcopy(tabuleiro)
                 novo_tabuleiro.process_move(possivel_jogada, cor_peca_atual)
-                proximas_jogadas = Arvore(novo_tabuleiro, cor_peca_jogador, novo_tabuleiro.opponent(
-                    cor_peca_atual), profundidade-1,0)
-                proximas_jogadas.jogada = possivel_jogada
-                self.filhos.append(proximas_jogadas)
+                Arvore(novo_tabuleiro, cor_peca_jogador, novo_tabuleiro.opponent(
+                    cor_peca_atual), profundidade-1, False, self.filhos, possivel_jogada)
+                #proximas_jogadas.jogada = possivel_jogada
+                #self.filhos.append(proximas_jogadas)
+            irmaos.append(self)
 
 
     def minimax(self, maximiza, alpha, beta):
@@ -88,7 +95,7 @@ def make_move(the_board, color):
     :return: (int, int) tuple with x, y indexes of the move (remember: 0 is the first row/column)
     """
     profundidade = 3
-    jogadas = Arvore(the_board, color, color, profundidade,1)
+    jogadas = Arvore(the_board, color, color, profundidade, True, [])
     random.shuffle(jogadas.filhos)
     jogadas.minimax(True, jogadas.min_pontos, jogadas.max_pontos)
 
