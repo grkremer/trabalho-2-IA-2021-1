@@ -1,7 +1,7 @@
 import random
 import sys
 import copy
-from threading import Thread, main_thread
+from threading import Thread
 
 # Agente que utiliza minimax com heuristica de número de peças e mobilidade
 
@@ -51,7 +51,7 @@ class Arvore:
                     pontuacao_maxima = max(pontuacao_maxima, pontuacao_filho)
                     alpha = max(alpha, pontuacao_filho)
                     if(beta <= alpha):
-                        self.filhos = self.filhos[0:i]
+                        self.filhos = self.filhos[0:(i+1)]
                         break
                 self.pontos = pontuacao_maxima
                 return pontuacao_maxima
@@ -62,7 +62,7 @@ class Arvore:
                     pontuacao_minima = min(pontuacao_minima, pontuacao_filho)
                     beta = min(beta, pontuacao_filho)
                     if(beta <= alpha):
-                        self.filhos = self.filhos[0:i]
+                        self.filhos = self.filhos[0:(i+1)]
                         break
                 self.pontos = pontuacao_minima
                 return pontuacao_minima
@@ -82,9 +82,7 @@ class Arvore:
         return num_pecas * (0.8 - proporcao_mobilidade) + zone * 0.2 + mobilidade * proporcao_mobilidade
 
     def custo(self, cor_peca, tabuleiro, possiveis_jogadas_tamanho):
-        if(tabuleiro.piece_count[tabuleiro.opponent(cor_peca)] == 0):
-            return self.max_pontos
-        elif(tabuleiro.piece_count[tabuleiro.EMPTY] == 0):
+        if(tabuleiro.is_terminal_state()):
             if (tabuleiro.piece_count[cor_peca] > tabuleiro.piece_count[tabuleiro.opponent(cor_peca)]):
                 return self.max_pontos
             else:
@@ -145,7 +143,7 @@ def make_move(the_board, color):
     random.shuffle(jogadas.filhos)
     jogadas.minimax(True, jogadas.min_pontos, jogadas.max_pontos)
 
-    melhor_jogada = jogadas.filhos[0]
+    melhor_jogada = jogadas.filhos[0].jogada
     pontuacao_maxima = jogadas.min_pontos
 
     for filho in jogadas.filhos:

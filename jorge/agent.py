@@ -38,7 +38,7 @@ class Arvore:
                     pontuacao_maxima = max(pontuacao_maxima, pontuacao_filho)
                     alpha = max(alpha, pontuacao_filho)
                     if(beta <= alpha):
-                        self.filhos = self.filhos[0:i]
+                        self.filhos = self.filhos[0:(i+1)]
                         break
                 self.pontos = pontuacao_maxima
                 return pontuacao_maxima
@@ -49,7 +49,7 @@ class Arvore:
                     pontuacao_minima = min(pontuacao_minima, pontuacao_filho)
                     beta = min(beta, pontuacao_filho)
                     if(beta <= alpha):
-                        self.filhos = self.filhos[0:i]
+                        self.filhos = self.filhos[0:(i+1)]
                         break
                 self.pontos = pontuacao_minima
                 return pontuacao_minima
@@ -85,7 +85,7 @@ def make_move(the_board, color):
     random.shuffle(jogadas.filhos)
     jogadas.minimax(True, jogadas.min_pontos, jogadas.max_pontos)
 
-    melhor_jogada = jogadas.filhos[0]
+    melhor_jogada = jogadas.filhos[0].jogada
     pontuacao_maxima = jogadas.min_pontos
 
     for filho in jogadas.filhos:

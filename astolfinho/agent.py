@@ -38,7 +38,7 @@ class Arvore:
                     pontuacao_maxima = max(pontuacao_maxima, pontuacao_filho)
                     alpha = max(alpha, pontuacao_filho)
                     if(beta <= alpha):
-                        self.filhos = self.filhos[0:i]
+                        self.filhos = self.filhos[0:(i+1)]
                         break
                 self.pontos = pontuacao_maxima
                 return pontuacao_maxima
@@ -49,7 +49,7 @@ class Arvore:
                     pontuacao_minima = min(pontuacao_minima, pontuacao_filho)
                     beta = min(beta, pontuacao_filho)
                     if(beta <= alpha):
-                        self.filhos = self.filhos[0:i]
+                        self.filhos = self.filhos[0:(i+1)]
                         break
                 self.pontos = pontuacao_minima
                 return pontuacao_minima
@@ -69,8 +69,11 @@ class Arvore:
         return num_pecas * (0.8 - proporcao_mobilidade) + zone * 0.2 + mobilidade * proporcao_mobilidade
 
     def custo(self, cor_peca, tabuleiro, possiveis_jogadas_tamanho):
-        if(tabuleiro.piece_count[tabuleiro.opponent(cor_peca)] == 0):
-            return self.max_pontos
+        if(tabuleiro.is_terminal_state()):
+            if (tabuleiro.piece_count[cor_peca] > tabuleiro.piece_count[tabuleiro.opponent(cor_peca)]):
+                return self.max_pontos
+            else:
+                return self.min_pontos 
         else:
             cor_peca_oponente = tabuleiro.opponent(cor_peca)
             possiveis_jogadas_tamanho_oponente = len(tabuleiro.legal_moves(cor_peca_oponente))
@@ -100,18 +103,19 @@ def is_danger_zone(x, y):
 def is_bad_zone(x, y):
     return (((y in [1, 6]) and (x >= 2 and x <= 5)) or ((x in [1, 6]) and (y >= 2 and y <= 5)))
 
-def calcula_profundidade(tabuleiro,cor):
+def calcula_profundidade(tabuleiro, cor):
     nro_jogadas = len(tabuleiro.legal_moves(cor))
     vazios = tabuleiro.piece_count[tabuleiro.EMPTY]
-    if(nro_jogadas < 8 and vazios < 10):
-        return 6
-    elif(nro_jogadas < 8 and vazios < 15):
-        return 5
-    elif(nro_jogadas < 8 and vazios < 20):
-        return 4
-    elif(vazios < 18):
-        return 4
-    elif(vazios < 61 and vazios > 50):
+    if(nro_jogadas < 8):
+        if(vazios < 10):
+            return 6
+        if(vazios < 15):
+            return 5
+        if(vazios < 22):
+            return 4
+        else:
+            return 3
+    elif(vazios < 18 or (50 < vazios < 61)):
         return 4
     else:
         return 3
@@ -123,12 +127,15 @@ def make_move(the_board, color):
     :param color: a character indicating the color to make the move ('B' or 'W')
     :return: (int, int) tuple with x, y indexes of the move (remember: 0 is the first row/column)
     """
-    profundidade = calcula_profundidade(the_board,color)
+    profundidade = calcula_profundidade(the_board, color)
     jogadas = Arvore(the_board, color, color, profundidade)
     random.shuffle(jogadas.filhos)
+    print("NRO DE JOGADAS =" + str(len(jogadas.filhos)))
+
     jogadas.minimax(True, jogadas.min_pontos, jogadas.max_pontos)
 
-    melhor_jogada = jogadas.filhos[0]
+    print("NRO DE JOGADAS =" + str(len(jogadas.filhos)))
+    melhor_jogada = jogadas.filhos[0].jogada
     pontuacao_maxima = jogadas.min_pontos
 
     for filho in jogadas.filhos:
