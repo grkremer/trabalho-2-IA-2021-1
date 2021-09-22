@@ -2,6 +2,7 @@ import random
 import sys
 import copy
 from threading import Thread
+from multiprocessing import Process
 
 # Agente que utiliza minimax com heuristica de número de peças e mobilidade
 
@@ -26,10 +27,11 @@ class Arvore:
             threads = [None] * len(possiveis_jogadas)
             print("Numero de threads = " + str(len(threads)))
             print("Profundidade = " + str(profundidade))
+            print("Vazios = " + str(tabuleiro.piece_count[tabuleiro.EMPTY]))
             for i in range(len(threads)):
                 novo_tabuleiro = copy.deepcopy(tabuleiro)
                 novo_tabuleiro.process_move(possiveis_jogadas[i], cor_peca_atual)
-                threads[i] = Thread(target=Arvore, args=(novo_tabuleiro, cor_peca_jogador, novo_tabuleiro.opponent(
+                threads[i] = Process(target=Arvore, args=(novo_tabuleiro, cor_peca_jogador, novo_tabuleiro.opponent(
                     cor_peca_atual), profundidade-1, False, self.filhos, possiveis_jogadas[i]))
                 threads[i].start()
             for i in range(len(threads)):   
@@ -116,13 +118,15 @@ def is_bad_zone(x, y):
 def calcula_profundidade(tabuleiro, cor):
     nro_jogadas = len(tabuleiro.legal_moves(cor))
     vazios = tabuleiro.piece_count[tabuleiro.EMPTY]
-    if(nro_jogadas < 4 and vazios < 7):
+    if(nro_jogadas < 8 and vazios < 10):
         return 6
-    elif(nro_jogadas < 8 and vazios < 10):
+    elif(nro_jogadas < 8 and vazios < 15):
         return 5
-    elif(nro_jogadas < 15 and vazios < 24):
+    elif(nro_jogadas < 8 and vazios < 22):
         return 4
     elif(vazios < 18):
+        return 4
+    elif(vazios < 61 and vazios > 50):
         return 4
     else:
         return 3

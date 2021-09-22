@@ -100,11 +100,18 @@ def is_danger_zone(x, y):
 def is_bad_zone(x, y):
     return (((y in [1, 6]) and (x >= 2 and x <= 5)) or ((x in [1, 6]) and (y >= 2 and y <= 5)))
 
-def calcula_profundidade(tabuleiro):
+def calcula_profundidade(tabuleiro,cor):
+    nro_jogadas = len(tabuleiro.legal_moves(cor))
     vazios = tabuleiro.piece_count[tabuleiro.EMPTY]
-    if(vazios < 10):
+    if(nro_jogadas < 8 and vazios < 10):
+        return 6
+    elif(nro_jogadas < 8 and vazios < 15):
         return 5
-    if(vazios < 18):
+    elif(nro_jogadas < 8 and vazios < 20):
+        return 4
+    elif(vazios < 18):
+        return 4
+    elif(vazios < 61 and vazios > 50):
         return 4
     else:
         return 3
@@ -116,7 +123,7 @@ def make_move(the_board, color):
     :param color: a character indicating the color to make the move ('B' or 'W')
     :return: (int, int) tuple with x, y indexes of the move (remember: 0 is the first row/column)
     """
-    profundidade = calcula_profundidade(the_board)
+    profundidade = calcula_profundidade(the_board,color)
     jogadas = Arvore(the_board, color, color, profundidade)
     random.shuffle(jogadas.filhos)
     jogadas.minimax(True, jogadas.min_pontos, jogadas.max_pontos)
