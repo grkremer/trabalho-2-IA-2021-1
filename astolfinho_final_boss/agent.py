@@ -24,9 +24,6 @@ class Arvore:
             irmaos.append(self)
         elif usa_multiprocess:
             threads = [None] * len(possiveis_jogadas)
-            print("Numero de threads = " + str(len(threads)))
-            print("Profundidade = " + str(profundidade))
-            print("Vazios = " + str(tabuleiro.piece_count[tabuleiro.EMPTY]))
             for i in range(len(threads)):
                 novo_tabuleiro = copy.deepcopy(tabuleiro)
                 novo_tabuleiro.process_move(possiveis_jogadas[i], cor_peca_atual)
@@ -117,15 +114,16 @@ def is_bad_zone(x, y):
 def calcula_profundidade(tabuleiro, cor):
     nro_jogadas = len(tabuleiro.legal_moves(cor))
     vazios = tabuleiro.piece_count[tabuleiro.EMPTY]
-    if(nro_jogadas < 8 and vazios < 10):
-        return 6
-    elif(nro_jogadas < 8 and vazios < 15):
-        return 5
-    elif(nro_jogadas < 8 and vazios < 22):
-        return 4
-    elif(vazios < 18):
-        return 4
-    elif(vazios < 61 and vazios > 50):
+    if(nro_jogadas < 8):
+        if(vazios < 10):
+            return 6
+        if(vazios < 15):
+            return 5
+        if(vazios < 22):
+            return 4
+        else:
+            return 3
+    elif(vazios < 18 or (50 < vazios < 61)):
         return 4
     else:
         return 3
@@ -150,5 +148,4 @@ def make_move(the_board, color):
             melhor_jogada = filho.jogada
             pontuacao_maxima = filho.pontos
 
-    print("pontuacao = "+str(pontuacao_maxima))
     return melhor_jogada
