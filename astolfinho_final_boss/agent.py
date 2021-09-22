@@ -1,7 +1,7 @@
 import random
 import sys
 import copy
-from threading import Thread
+from threading import Thread, main_thread
 
 # Agente que utiliza minimax com heuristica de número de peças e mobilidade
 
@@ -84,6 +84,11 @@ class Arvore:
     def custo(self, cor_peca, tabuleiro, possiveis_jogadas_tamanho):
         if(tabuleiro.piece_count[tabuleiro.opponent(cor_peca)] == 0):
             return self.max_pontos
+        elif(tabuleiro.piece_count[tabuleiro.EMPTY] == 0):
+            if (tabuleiro.piece_count[cor_peca] > tabuleiro.piece_count[tabuleiro.opponent(cor_peca)]):
+                return self.max_pontos
+            else:
+                return self.min_pontos 
         else:
             cor_peca_oponente = tabuleiro.opponent(cor_peca)
             possiveis_jogadas_tamanho_oponente = len(tabuleiro.legal_moves(cor_peca_oponente))

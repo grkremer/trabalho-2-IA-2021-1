@@ -85,6 +85,8 @@ class Arvore:
         return num_pecas * (0.8 - proporcao_mobilidade) + zone * 0.2 + mobilidade * proporcao_mobilidade
 
     def custo(self, cor_peca, tabuleiro, possiveis_jogadas_tamanho):
+        if(tabuleiro.piece_count[tabuleiro.EMPTY]):
+            return
         if(tabuleiro.piece_count[tabuleiro.opponent(cor_peca)] == 0):
             return self.max_pontos
         else:
