@@ -20,7 +20,7 @@ class Arvore:
         possiveis_jogadas = tabuleiro.legal_moves(cor_peca_atual)
         if(profundidade == 0 or len(possiveis_jogadas) == 0 or tabuleiro.is_terminal_state()):
             self.pontos = self.custo(
-                cor_peca_jogador, tabuleiro, len(possiveis_jogadas))
+                cor_peca_jogador, tabuleiro, len(possiveis_jogadas), jogada_atual)
             irmaos.append(self)
         elif usa_multiprocess:
             threads = [None] * len(possiveis_jogadas)
@@ -74,14 +74,26 @@ class Arvore:
     def custo_peca(self, cor_peca, tabuleiro, possiveis_jogadas_tamanho):
         num_pecas = self.normaliza_pontuacao(
                 0, 64, tabuleiro.piece_count[cor_peca])
-        zone = self.normaliza_pontuacao(
-                80, 256, danger_zone(tabuleiro.tiles, cor_peca))
         mobilidade = self.normaliza_pontuacao(
-                0, 32, possiveis_jogadas_tamanho)
+                0, 28, possiveis_jogadas_tamanho)
         proporcao_mobilidade = (tabuleiro.piece_count[tabuleiro.EMPTY]/60)*0.2
-        return num_pecas * (0.8 - proporcao_mobilidade) + zone * 0.2 + mobilidade * proporcao_mobilidade
+        return num_pecas * (1 - proporcao_mobilidade) + mobilidade * proporcao_mobilidade
 
-    def custo(self, cor_peca, tabuleiro, possiveis_jogadas_tamanho):
+    def is_danger_zone(self, x, y):
+        return (((y in [0, 7]) and (x in [1, 6])) or ((y in [1, 6]) and (x in [0, 1, 6, 7])))
+
+    def is_bad_zone(self, x, y):
+        return (((y in [1, 6]) and (x >= 2 and x <= 5)) or ((x in [1, 6]) and (y >= 2 and y <= 5)))
+
+    def perigo(self, jogada_atual):
+        if self.is_bad_zone(jogada_atual[0], jogada_atual[1]):
+            return (self.max_pontos+self.min_pontos)/2
+        if self.is_danger_zone(jogada_atual[0], jogada_atual[1]):
+            return self.min_pontos
+        else:
+            return self.max_pontos
+
+    def custo(self, cor_peca, tabuleiro, possiveis_jogadas_tamanho, jogada_atual):
         if(tabuleiro.is_terminal_state()):
             if (tabuleiro.piece_count[cor_peca] > tabuleiro.piece_count[tabuleiro.opponent(cor_peca)]):
                 return self.max_pontos
@@ -90,29 +102,9 @@ class Arvore:
         else:
             cor_peca_oponente = tabuleiro.opponent(cor_peca)
             possiveis_jogadas_tamanho_oponente = len(tabuleiro.legal_moves(cor_peca_oponente))
-            return self.custo_peca(cor_peca, tabuleiro, possiveis_jogadas_tamanho) * 0.7 + self.custo_peca(cor_peca_oponente, tabuleiro, possiveis_jogadas_tamanho_oponente) * -0.3
+            return self.custo_peca(cor_peca, tabuleiro, possiveis_jogadas_tamanho) * 0.65 + self.perigo(jogada_atual) * 0.1 + self.custo_peca(cor_peca_oponente, tabuleiro, possiveis_jogadas_tamanho_oponente) * -0.25
+    
 
-
-def danger_zone(board, color):
-    points = 0
-    for x in range(8):
-        for y in range(8):
-            if (board[x][y] == color):
-                if is_danger_zone(x, y):
-                    points += 1
-                elif is_bad_zone(x, y):
-                    points += 2
-                else:
-                    points += 4
-            else:
-                points += 4
-    return points
-
-def is_danger_zone(x, y):
-    return (((y in [0, 7]) and (x in [1, 6])) or ((y in [1, 6]) and (x in [0, 1, 6, 7])))
-
-def is_bad_zone(x, y):
-    return (((y in [1, 6]) and (x >= 2 and x <= 5)) or ((x in [1, 6]) and (y >= 2 and y <= 5)))
 
 def calcula_profundidade(tabuleiro, cor):
     nro_jogadas = len(tabuleiro.legal_moves(cor))
