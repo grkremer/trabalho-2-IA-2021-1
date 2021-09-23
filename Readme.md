@@ -1,49 +1,39 @@
-# Servidor de Othello
+# IA - Trabalho 2
 
-Este arquivo contem instruções simples para execução do servidor e do jogador 'random'.
+## Integrantes do grupo
 
-## Requisitos
+- 288556 - Matheus Dussin Bampi
+- 290401 - Gustavo Ribeiro Kremer
+- 305303 - Marco Antonio Athayde de Aguiar Vieira
 
-O servidor foi testado em uma máquina GNU/Linux (Ubuntu, mais precisamente) com
-o interpretador python 3.7.7
+## Bibliotecas utilizadas
 
-## Instruções
+- import random
+- import copy
+- from threading import Thread
 
-Para iniciar uma partida de Othello, digite no terminal:
+Para escolher qual jogada deve ser realizada, foi implementado o algoritmo minimax com a poda alpha beta.
+O desenvolvimento do algoritmo teve grande inspiração no video do Youtuber Sebastian Lague.
 
-python server.py [-h] [-d delay] [-l log-history] player1 player2
+Para avaliar as próximas jogadas do otello, é montada uma árvore de jogadas, cada nó da arvore tem como filho as jogadas futuras que são possiveis.
+Cada jogada recebe uma pontuação com base em uma heuristica, a pontuação máxima dessa heurística é 100 pontos, e a mínima -100.
+Para calcular a heurística da jogada, é feito um cálculo com 2 fatores: a quantidade de peças e a mobilidade.
 
-Onde 'player(1 ou 2)' são os diretórios onde estão os agent.py dos jogadores.
-Os argumentos entre colchetes são opcionais, seu significado é descrito a seguir:
+A quantidade de peças é quantas peças da sua cor o jogador irá ter no tabuleiro.
+A mobilidade é a quantidade de movimentos livres que a jogada possui.
 
--h, --help            Mensagem de ajuda
--d delay, --delay delay
-                    Tempo alocado para os jogadores realizarem a jogada (default=5s)
--l log-history, --log-history log-history
-                    Arquivo que conterá registro simples de jogadas (default=history.txt)
--o output-file, --output-file output-file
-                    Arquivo que conterá detalhes do jogo (incluindo registro de jogadas)
+Para calcular a heurística é levado em conta 60% a sua jogada e 30% a jogada do oponente. Além desses fatores, 10% do peso da heurística é relacionda ao "fator perigo" da jogada.
+O fator perigo está relacionado com a posição em que a peça será colocada, se essa é uma posição perigosa ou não.
+A escolha dessas heuristica se deu com base em um estudo das estratégias de Otello, encontradas em um site na internet.
 
-## Jogador random
+Para tentar melhorar o desempenho do agente, foi implementado paralelismo na avaliação da primeira geração dos filhos da árvore de jogadas. Cada filho, e seus sucessores, são avaliados em uma Thread diferente.
+A implementação do multithread não resultou em ganhos de desempenho significativos.
 
-O jogador 'random' se localiza no diretório randomplayer. Para jogar uma partida com ele,
-basta substituir diretorio_player1 e/ou 2 por randomplayer. Como exemplo, inicie
-uma partida random vs. random para ver o servidor funcionando:
+Para aproveitar melhor o tempo de processamento disponível, a árvore de jogadas é criada com diferentes níveis de profundidade, dependendo de quantos filhos serão gerados nas próximas jogadas.
+No início do jogo, a árvore é gerada com profundidade 3, porém, no final do jogo, chega a 6 de profundidade.
 
-python server.py randomplayer randomplayer
+- Vídeo sobre minimax do Youtuber Sebastian Lague:
+<https://www.youtube.com/watch?v=l-hh51ncgDI&ab_channel=SebastianLague>
 
-Você verá o tabuleiro se preenchendo quase instantaneamente porque o jogador random é muito rápido (e muito incompetente).
-
-## Funcionamento
-
-Iniciando pelo player1, que jogará com as peças pretas, o servidor cria o objeto Board e chama o make_move do agent.py dentro do diretório do player 1.
-
-O make_move deve retornar as coordenadas x, y da jogada. O servidor as recebe, processa, e repete o procedimento para o próximo jogador, com o estado atualizado.
-
-## Notas
-
-* O servidor checa a legalidade das jogadas antes de efetivá-las.
-* Você pode usar as funções da classe Board como auxílio para obter as jogadas válidas, além de outras facilidades.
-* Jogadas ilegais repetidas vezes resultam em desqualificação.
-* Timeout resulta em perda da vez (o que é uma desvantagem no jogo)
-* Em caso de problemas com o servidor, por favor avise via moodle ou discord.
+- Site sobre estratégias de Otello:
+<https://www.ultraboardgames.com/othello/tips.php>
